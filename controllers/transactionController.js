@@ -85,7 +85,7 @@ export const getDashboardInformation = async (req, res) => {
 
       if (transaction.type === "income") {
         totalIncome += amount;
-      } else {
+      } else if (transaction.type === "expense") {
         totalExpense += amount;
       }
     });
@@ -121,7 +121,7 @@ export const getDashboardInformation = async (req, res) => {
 
         if (transaction.type === "income") {
           income += amount;
-        } else {
+        } else if (transaction.type === "expense") {
           expense += amount;
         }
       });
@@ -258,7 +258,6 @@ export const addTransaction = async (req, res) => {
 export const transferMoneyToAccount = async (req, res) => {
   try {
     const { userId } = req.user;
-
     const { from_account, to_account, amount } = req.body;
 
     if (!from_account || !to_account || !amount) {
@@ -314,8 +313,6 @@ export const transferMoneyToAccount = async (req, res) => {
 
     const description = `Transfer (${fromAccount.account_name} - ${toAccount.account_name})`;
 
-    const description1 = `Received (${fromAccount.account_name} - ${toAccount.account_name})`;
-
     await prisma.$transaction([
       prisma.account.update({
         where: {
@@ -343,21 +340,10 @@ export const transferMoneyToAccount = async (req, res) => {
         data: {
           user_id: userId,
           description,
-          type: "expense",
+          type: "transfer",
           status: "Completed",
           amount: newAmount,
           source: fromAccount.account_name,
-        },
-      }),
-
-      prisma.transaction.create({
-        data: {
-          user_id: userId,
-          description: description1,
-          type: "income",
-          status: "Completed",
-          amount: newAmount,
-          source: toAccount.account_name,
         },
       }),
     ]);
